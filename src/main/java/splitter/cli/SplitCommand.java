@@ -10,7 +10,8 @@ import splitter.storage.JsonStore;
 
 @Command(name = "split", mixinStandardHelpOptions = true, description = "Split shared expenses in a flat.",
         subcommands = {MemberCommand.class, MembersCommand.class, AddCommand.class, ListCommand.class,
-                ShowCommand.class})
+                ShowCommand.class, EditCommand.class, DeleteCommand.class, OwesCommand.class,
+                PaidCommand.class, PaymentsCommand.class, UnpayCommand.class})
 public final class SplitCommand {
     @Option(names = "--file", description = "Data file (default: ~/.splitter/data.json)")
     private Path file;
