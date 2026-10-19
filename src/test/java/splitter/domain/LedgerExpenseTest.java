@@ -124,4 +124,11 @@ class LedgerExpenseTest {
         map.put("Jo", new BigDecimal("5"));
         assertEquals(List.of("Alex", "Sam"), ledger.expense(e.id()).split().people());
     }
+
+    @Test void rejectsMoreThanTwoDecimalPlacesWithSplitterException() {
+        assertThrows(SplitterException.class, () -> ledger.addExpense("x", new BigDecimal("1.005"), "Sam", new SplitSpec.Everyone(), D));
+        assertThrows(SplitterException.class, () -> ledger.addExpense("x", new BigDecimal("5"), "Sam",
+            new SplitSpec.Percent(pct("Alex", "33.333", "Sam", "66.667")), D));
+        assertEquals(new BigDecimal("1.50"), ledger.addExpense("x", new BigDecimal("1.500"), "Sam", new SplitSpec.Everyone(), D).amount());
+    }
 }

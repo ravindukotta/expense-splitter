@@ -90,6 +90,9 @@ public final class Ledger {
         if (amount.signum() <= 0) {
             throw new SplitterException("Amount must be greater than zero");
         }
+        if (amount.stripTrailingZeros().scale() > 2) {
+            throw new SplitterException("Amount must have at most 2 decimal places");
+        }
         return amount.setScale(2);
     }
 
@@ -124,6 +127,9 @@ public final class Ledger {
                     String name = resolver.apply(entry.getKey());
                     if (entry.getValue().signum() <= 0) {
                         throw new SplitterException("Percentage for " + name + " must be greater than zero");
+                    }
+                    if (entry.getValue().stripTrailingZeros().scale() > 2) {
+                        throw new SplitterException("Percentage for " + name + " must have at most 2 decimal places");
                     }
                     BigDecimal percent = entry.getValue().setScale(2);
                     names.add(name);
