@@ -10,13 +10,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import splitter.settlement.Balances;
+import splitter.settlement.Settlement;
+import splitter.settlement.Transfer;
 
 public final class Ledger {
     private static final BigDecimal HUNDRED = new BigDecimal("100");
 
-    private final Members members = new Members();
+    private final Members members;
     private final List<Expense> expenses = new ArrayList<>();
+    private final List<Payment> payments = new ArrayList<>();
     private int nextExpenseId = 1;
+    private int nextPaymentId = 1;
+
+    public Ledger() {
+        this.members = new Members();
+    }
+
+    private Ledger(Members members) {
+        this.members = members;
+    }
+
+    public static Ledger restore(LedgerData data) {
+        Ledger ledger = new Ledger(new Members(data.members()));
+        ledger.expenses.addAll(data.expenses());
+        ledger.payments.addAll(data.payments());
+        ledger.nextExpenseId = data.nextExpenseId();
+        ledger.nextPaymentId = data.nextPaymentId();
+        return ledger;
+    }
+
+    public LedgerData snapshot() {
+        return new LedgerData(members.all(), List.copyOf(expenses), List.copyOf(payments), nextExpenseId, nextPaymentId);
+    }
 
     public Members members() {
         return members;
@@ -68,6 +94,50 @@ public final class Ledger {
 
     public Expense deleteExpense(int id) {
         return expenses.remove(indexOfExpense(id));
+    }
+
+    public void removeMember(String name) {
+        String canonical = members.resolveActive(name);
+        BigDecimal balance = balances().get(canonical);
+        if (balance.signum() != 0) {
+            throw new SplitterException(
+                    canonical + " still has a balance of " + Money.format(balance) + "; settle up first");
+        }
+        members.deactivate(canonical);
+    }
+
+    public List<Payment> payments() {
+        return Collections.unmodifiableList(payments);
+    }
+
+    public LinkedHashMap<String, BigDecimal> balances() {
+        return Balances.compute(expenses, payments, members.order());
+    }
+
+    public List<Transfer> suggestedPayments() {
+        return Settlement.simplify(balances());
+    }
+
+    public Payment recordPayment(String from, String to, LocalDate date) {
+        String payer = members.resolve(from);
+        String payee = members.resolve(to);
+        Transfer match = suggestedPayments().stream()
+                .filter(t -> t.from().equals(payer) && t.to().equals(payee))
+                .findFirst()
+                .orElseThrow(() -> new SplitterException("No suggested payment from " + payer + " to " + payee));
+        Payment payment = new Payment(nextPaymentId, payer, payee, match.amount(), date);
+        payments.add(payment);
+        nextPaymentId++;
+        return payment;
+    }
+
+    public Payment unpay(int id) {
+        for (int i = 0; i < payments.size(); i++) {
+            if (payments.get(i).id() == id) {
+                return payments.remove(i);
+            }
+        }
+        throw new SplitterException("No payment #" + id);
     }
 
     private int indexOfExpense(int id) {
