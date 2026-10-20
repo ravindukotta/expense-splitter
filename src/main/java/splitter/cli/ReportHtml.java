@@ -6,6 +6,7 @@ import splitter.settlement.Transfer;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
@@ -38,8 +39,7 @@ final class ReportHtml {
     }
 
     static String render(MonthlyReport report) {
-        String month = report.month().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-            + " " + report.month().getYear();
+        String month = monthName(report.month());
         String title = "Flat expenses — " + month;
         String count = report.expenseCount() + (report.expenseCount() == 1 ? " expense" : " expenses");
 
@@ -84,11 +84,16 @@ final class ReportHtml {
             <table>
             <tr><th>Name</th><th>Paid</th><th>Share</th><th>Earlier</th><th>Balance</th></tr>
             %s</table>
-            <p class="note">Balance = Earlier + Paid − Share. Positive means the flat owes you; negative means you owe.</p>
+            <p class="note">Balance = Earlier + Paid − Share. Positive means the flat owes you; negative means you owe. Earlier = carried over from before this month, plus payments made up to the end of it.</p>
             </main>
             </body>
             </html>
             """.formatted(title, STYLE, title, count, amount(report.total()), settle, rows);
+    }
+
+    /** English month and year, e.g. "October 2026". */
+    static String monthName(YearMonth month) {
+        return month.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + month.getYear();
     }
 
     /** Thousands separators and two decimals; a negative value keeps a plain hyphen. */

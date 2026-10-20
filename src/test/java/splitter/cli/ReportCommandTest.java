@@ -46,6 +46,7 @@ class ReportCommandTest extends CliTestSupport {
     }
     @Test void invalid_month() {
         var r = run("", "report", "--month", "2026-13", "--out", dir.resolve("x.html").toString());
+        assertEquals(1, r.exitCode());
         assertEquals("Error: Invalid month '2026-13'; expected YYYY-MM\n", r.err());
         assertFalse(Files.exists(dir.resolve("x.html")));
     }
@@ -57,7 +58,10 @@ class ReportCommandTest extends CliTestSupport {
     }
     @Test void does_not_change_the_data_file() throws IOException {
         byte[] before = Files.readAllBytes(dir.resolve("data.json"));
-        run("", "report", "--out", dir.resolve("r.html").toString());
+        Path out = dir.resolve("r.html");
+        var r = run("", "report", "--out", out.toString());
+        assertEquals(0, r.exitCode());
+        assertTrue(Files.exists(out));
         assertArrayEquals(before, Files.readAllBytes(dir.resolve("data.json")));
     }
 }

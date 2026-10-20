@@ -5,9 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Locale;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -18,8 +16,6 @@ import splitter.settlement.MonthlyReport;
 
 @Command(name = "report", description = "Write a monthly HTML report.")
 final class ReportCommand implements Callable<Integer> {
-    private static final DateTimeFormatter MONTH_NAME = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
-
     @ParentCommand
     private SplitCommand parent;
 
@@ -37,7 +33,7 @@ final class ReportCommand implements Callable<Integer> {
         MonthlyReport report = MonthlyReport.of(ledger.expenses(), ledger.payments(), month,
                 ledger.members().order());
         if (report.nothingToReport()) {
-            ctx.out().print("Nothing to report for " + MONTH_NAME.format(month) + ".\n");
+            ctx.out().print("Nothing to report for " + ReportHtml.monthName(month) + ".\n");
             return 0;
         }
         Path target = out != null ? out : Path.of("report-" + month + ".html");

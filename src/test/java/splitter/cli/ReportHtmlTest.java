@@ -37,11 +37,16 @@ class ReportHtmlTest {
         assertTrue(html.contains("<title>Flat expenses — October 2026</title>"));
         assertTrue(html.contains("4 expenses · total 1,341.00"));
         assertTrue(html.contains("Alex pays Sam"));
-        assertTrue(html.contains("482.25"));
+        assertTrue(html.contains("Alex pays Sam <span class=\"amt\">482.25</span>"));
         assertTrue(html.contains("1,200.00"));
         assertTrue(html.contains("+801.75"));
         assertTrue(html.contains("−482.25"));
         assertTrue(html.contains("Balance = Earlier + Paid − Share."));
+        assertTrue(html.contains("Earlier = carried over from before this month, plus payments made up to the end of it."));
+    }
+
+    @Test void month_name_is_english_month_and_year() {
+        assertEquals("October 2026", ReportHtml.monthName(YearMonth.of(2026, 10)));
     }
 
     @Test void is_self_contained() {
